@@ -237,7 +237,7 @@
                 ¡El Héroe ha Llegado!
             </h3>
             <p class="text-emerald-100 text-base sm:text-lg mb-6 leading-relaxed">
-                El 24 de Noviembre finalmente está aquí. La espera ha terminado y nuestro momento ha comenzado.
+                El 24 de Noviembre de 2026 finalmente está aquí. La espera ha terminado y nuestro momento ha comenzado.
             </p>
             <div class="p-4 bg-emerald-950/80 rounded-xl border border-amber-500/40 text-amber-200 font-cinzel text-sm">
                 "Es peligroso ir solo... ¡A partir de hoy caminamos juntos!"
@@ -253,11 +253,10 @@
 
     <!-- Logic Script -->
     <script>
-        // Target Date explicit ISO String format (YYYY-MM-DDTHH:mm:ss)
-        const TARGET_DATE = new Date("2026-11-24T10:00:00").getTime();
+        // Fecha objetivo fija al 24 de Noviembre de 2026 a las 10:00 AM
+        const TARGET_DATE = new Date(2026, 10, 24, 10, 0, 0).getTime();
 
         const dailyQuotesMap = {
-            default: "Cada segundo que pasa es un paso más cerca del día en que el destino finalmente nos una.",
             quotes: [
                 "No necesito la Espada Maestra para saber que tú eres mi verdadero héroe.",
                 "En cada línea de tiempo y en cada universo, mi corazón siempre elegiría buscarte a ti.",
@@ -274,21 +273,22 @@
             ]
         };
 
-        const daysEl = document.getElementById('days');
-        const hoursEl = document.getElementById('hours');
-        const minutesEl = document.getElementById('minutes');
-        const secondsEl = document.getElementById('seconds');
-        const dailyQuoteEl = document.getElementById('dailyQuote');
-        const quoteDateEl = document.getElementById('quoteDate');
-        const timerContainer = document.getElementById('timerContainer');
-        const celebrationCard = document.getElementById('celebrationCard');
-
         function updateTimer() {
             const now = new Date().getTime();
             const distance = TARGET_DATE - now;
 
+            const daysEl = document.getElementById('days');
+            const hoursEl = document.getElementById('hours');
+            const minutesEl = document.getElementById('minutes');
+            const secondsEl = document.getElementById('seconds');
+            const timerContainer = document.getElementById('timerContainer');
+            const celebrationCard = document.getElementById('celebrationCard');
+
+            if (!daysEl || !hoursEl || !minutesEl || !secondsEl) return;
+
             if (distance <= 0) {
-                handleArrival();
+                if (timerContainer) timerContainer.classList.add('hidden');
+                if (celebrationCard) celebrationCard.classList.remove('hidden');
                 return;
             }
 
@@ -304,6 +304,11 @@
         }
 
         function updateDailyQuote() {
+            const dailyQuoteEl = document.getElementById('dailyQuote');
+            const quoteDateEl = document.getElementById('quoteDate');
+            
+            if (!dailyQuoteEl || !quoteDateEl) return;
+
             const today = new Date();
             const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
             const index = dayOfYear % dailyQuotesMap.quotes.length;
@@ -314,20 +319,66 @@
             quoteDateEl.textContent = today.toLocaleDateString('es-ES', options);
         }
 
-        function handleArrival() {
-            timerContainer.classList.add('hidden');
-            celebrationCard.classList.remove('hidden');
-            
-            confetti({
-                particleCount: 100,
-                spread: 100,
-                origin: { y: 0.6 },
-                colors: ['#ffd700', '#38bdf8', '#10b981', '#ffffff']
-            });
-        }
-
         function initParticles() {
             const canvas = document.getElementById('particlesCanvas');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
             let width = canvas.width = window.innerWidth;
-            let
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = Array.from({ length: 35 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 2 + 1,
+                color: Math.random() > 0.4 ? 'rgba(255, 215, 0, ' : 'rgba(56, 189, 248, ',
+                alpha: Math.random(),
+                speedY: -(Math.random() * 0.5 + 0.2),
+                speedX: (Math.random() - 0.5) * 0.4,
+            }));
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                particles.forEach(p => {
+                    p.y += p.speedY;
+                    p.x += p.speedX;
+                    p.alpha += (Math.random() - 0.5) * 0.02;
+
+                    if (p.alpha < 0.1) p.alpha = 0.1;
+                    if (p.alpha > 0.8) p.alpha = 0.8;
+
+                    if (p.y < -10) {
+                        p.y = height + 10;
+                        p.x = Math.random() * width;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color + p.alpha + ')';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ffd700';
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            updateTimer();
+            setInterval(updateTimer, 1000);
+            updateDailyQuote();
+            initParticles();
+        });
+    </script>
+</body>
+</html>
