@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Llegada de mi Héroe | Cuenta Regresiva Zelda</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts: CINZEL (Zelda Epic Style) & INTER -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        triforce: {
+                            400: '#ffe066',
+                            500: '#ffd700',
+                            600: '#e6c200',
+                        },
+                        zonai: {
+                            400: '#38bdf8',
+                            500: '#0284c7',
+                            900: '#0c4a6e',
+                        },
+                        hyrule: {
+                            800: '#062c22',
+                            900: '#021a14',
+                            950: '#010f0b',
+                        }
+                    },
+                    animation: {
+                        'float-slow': 'float 5s ease-in-out infinite',
+                        'glow-pulse': 'glowPulse 3s infinite ease-in-out',
+                        'spin-slow': 'spin 20s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-12px) rotate(2deg)' },
+                        },
+                        glowPulse: {
+                            '0%, 100%': { filter: 'drop-shadow(0 0 15px rgba(255, 215, 0, 0.4))' },
+                            '50%': { filter: 'drop-shadow(0 0 30px rgba(255, 215, 0, 0.8))' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #04241b 0%, #02140f 60%, #010a07 100%);
+            min-height: 100vh;
+            color: #f1f5f9;
+        }
+
+        .font-zelda {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.05em;
+        }
+
+        /* Zelda Frame Border & Golden Accents */
+        .zelda-card {
+            background: rgba(4, 30, 23, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.05);
+            position: relative;
+        }
+
+        .zelda-card::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        /* Golden Corner Details */
+        .corner-decoration {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: #ffd700;
+            pointer-events: none;
+        }
+        .corner-tl { top: 6px; left: 6px; border-top: 2px solid #ffd700; border-left: 2px solid #ffd700; }
+        .corner-tr { top: 6px; right: 6px; border-top: 2px solid #ffd700; border-right: 2px solid #ffd700; }
+        .corner-bl { bottom: 6px; left: 6px; border-bottom: 2px solid #ffd700; border-left: 2px solid #ffd700; }
+        .corner-br { bottom: 6px; right: 6px; border-bottom: 2px solid #ffd700; border-right: 2px solid #ffd700; }
+
+        /* Glowing Text */
+        .gold-glow {
+            text-shadow: 0 0 12px rgba(255, 215, 0, 0.5), 0 0 25px rgba(255, 215, 0, 0.2);
+        }
+        .cyan-glow {
+            text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+        }
+
+        /* Particle Canvas */
+        #particlesCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #010a07; }
+        ::-webkit-scrollbar-thumb { background: #0d4a3a; border-radius: 4px; border: 1px solid #ffd700; }
+    </style>
+</head>
+<body class="antialiased flex flex-col justify-between selection:bg-amber-500 selection:text-black min-h-screen relative overflow-x-hidden">
+
+    <!-- Fairy Particles Canvas -->
+    <canvas id="particlesCanvas"></canvas>
+
+    <!-- Header Navigation -->
+    <header class="w-full max-w-7xl mx-auto p-4 sm:p-6 flex justify-between items-center relative z-10">
+        <div class="flex items-center gap-3">
+            <!-- Triforce Icon SVG -->
+            <div class="w-9 h-9 flex items-center justify-center animate-glow-pulse">
+                <svg viewBox="0 0 24 24" class="w-full h-full fill-amber-400">
+                    <path d="M12 2L6 12h12L12 2zM6 13L0 23h12L6 13zM18 13l-6 10h12l-6-10z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-lg sm:text-xl font-zelda font-bold text-amber-300 gold-glow">
+                    Héroe del Tiempo
+                </h1>
+                <p class="text-[10px] sm:text-xs text-emerald-400 font-medium tracking-widest uppercase">
+                    Cuenta Regresiva Mística
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- GitHub Pages Help Button -->
+            <button id="btnGithubHelp" class="px-3 py-2 rounded-xl zelda-card hover:border-amber-400 transition-all text-amber-300 hover:text-white flex items-center gap-2 text-xs font-semibold">
+                <i data-lucide="github" class="w-4 h-4 text-emerald-400"></i>
+                <span class="hidden sm:inline">¿Cómo publicar gratis?</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="w-full max-w-5xl mx-auto px-4 py-6 flex-grow flex flex-col justify-center items-center relative z-10">
+
+        <!-- Header Titles -->
+        <div class="text-center mb-6 max-w-2xl">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-emerald-950/80 text-amber-300 border border-amber-500/40 mb-4 shadow-lg">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span id="targetStatusText">Esperando el 24 de Noviembre, 10:00 AM</span>
+            </div>
+
+            <h2 class="text-3xl sm:text-5xl font-zelda font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 mb-3 leading-tight gold-glow">
+                Él es mi Link
+            </h2>
+            <p class="text-emerald-200/80 text-xs sm:text-sm font-medium tracking-wider max-w-md mx-auto">
+                "Incluso a través del tiempo y el espacio, los destinos verdaderos siempre se encuentran."
+            </p>
+        </div>
+
+        <!-- Timer Display Cards -->
+        <div id="timerContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 w-full max-w-4xl mb-8">
+            
+            <!-- Days -->
+            <div class="zelda-card rounded-2xl p-4 sm:p-6 text-center flex flex-col justify-center items-center group hover:border-amber-400 transition-all duration-300 animate-float-slow">
+                <div class="corner-decoration corner-tl"></div><div class="corner-decoration corner-tr"></div>
+                <div class="corner-decoration corner-bl"></div><div class="corner-decoration corner-br"></div>
+                <div class="text-4xl sm:text-6xl font-zelda font-black text-amber-300 gold-glow tracking-tight" id="days">00</div>
+                <span class="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest mt-2 group-hover:text-amber-300 transition-colors">Días</span>
+            </div>
+
+            <!-- Hours -->
+            <div class="zelda-card rounded-2xl p-4 sm:p-6 text-center flex flex-col justify-center items-center group hover:border-amber-400 transition-all duration-300 animate-float-slow" style="animation-delay: 0.5s;">
+                <div class="corner-decoration corner-tl"></div><div class="corner-decoration corner-tr"></div>
+                <div class="corner-decoration corner-bl"></div><div class="corner-decoration corner-br"></div>
+                <div class="text-4xl sm:text-6xl font-zelda font-black text-amber-300 gold-glow tracking-tight" id="hours">00</div>
+                <span class="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest mt-2 group-hover:text-amber-300 transition-colors">Horas</span>
+            </div>
+
+            <!-- Minutes -->
+            <div class="zelda-card rounded-2xl p-4 sm:p-6 text-center flex flex-col justify-center items-center group hover:border-amber-400 transition-all duration-300 animate-float-slow" style="animation-delay: 1s;">
+                <div class="corner-decoration corner-tl"></div><div class="corner-decoration corner-tr"></div>
+                <div class="corner-decoration corner-bl"></div><div class="corner-decoration corner-br"></div>
+                <div class="text-4xl sm:text-6xl font-zelda font-black text-amber-300 gold-glow tracking-tight" id="minutes">00</div>
+                <span class="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest mt-2 group-hover:text-amber-300 transition-colors">Minutos</span>
+            </div>
+
+            <!-- Seconds -->
+            <div class="zelda-card rounded-2xl p-4 sm:p-6 text-center flex flex-col justify-center items-center group hover:border-sky-400 transition-all duration-300 animate-float-slow" style="animation-delay: 1.5s;">
+                <div class="corner-decoration corner-tl"></div><div class="corner-decoration corner-tr"></div>
+                <div class="corner-decoration corner-bl"></div><div class="corner-decoration corner-br"></div>
+                <div class="text-4xl sm:text-6xl font-zelda font-black text-sky-300 cyan-glow tracking-tight" id="seconds">00</div>
+                <span class="text-[10px] sm:text-xs font-bold text-sky-400 uppercase tracking-widest mt-2 group-hover:text-sky-200 transition-colors">Segundos</span>
+            </div>
+        </div>
+
+        <!-- Daily Romantic Quote Card -->
+        <div class="w-full max-w-2xl zelda-card rounded-2xl p-6 sm:p-8 text-center relative mb-8 border-amber-500/30">
+            <div class="corner-decoration corner-tl"></div><div class="corner-decoration corner-tr"></div>
+            <div class="corner-decoration corner-bl"></div><div class="corner-decoration corner-br"></div>
+            
+            <div class="flex justify-center items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-widest mb-3">
+                <i data-lucide="scroll" class="w-4 h-4 text-emerald-400"></i>
+                <span>Mensaje del Día</span>
+                <i data-lucide="sparkle" class="w-3.5 h-3.5 text-amber-400"></i>
+            </div>
+
+            <p id="dailyQuote" class="text-base sm:text-xl font-cinzel italic text-amber-100 leading-relaxed mb-4">
+                "Cargando la profecía del día..."
+            </p>
+
+            <div class="text-xs text-emerald-400 font-medium flex items-center justify-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                <span id="quoteDate">Hoy</span>
+            </div>
+        </div>
+
+        <!-- Arrival Celebration Display (Hidden until Nov 24, 10:00 AM) -->
+        <div id="celebrationCard" class="hidden zelda-card rounded-3xl p-8 sm:p-12 text-center max-w-2xl w-full border-2 border-amber-400 gold-glow my-4 animate-float-slow">
+            <div class="corner-decoration corner-tl"></div><div class="corner-decoration corner-tr"></div>
+            <div class="corner-decoration corner-bl"></div><div class="corner-decoration corner-br"></div>
+            
+            <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" class="w-full h-full fill-amber-400 animate-bounce">
+                    <path d="M12 2L6 12h12L12 2zM6 13L0 23h12L6 13zM18 13l-6 10h12l-6-10z"/>
+                </svg>
+            </div>
+            
+            <h3 class="text-3xl sm:text-4xl font-zelda font-bold text-amber-300 gold-glow mb-4">
+                ¡El Héroe ha Llegado!
+            </h3>
+            <p class="text-emerald-100 text-base sm:text-lg mb-6 leading-relaxed">
+                El 24 de Noviembre finalmente está aquí. La espera ha terminado y nuestro momento ha comenzado.
+            </p>
+            <div class="p-4 bg-emerald-950/80 rounded-xl border border-amber-500/40 text-amber-200 font-cinzel text-sm">
+                "Es peligroso ir solo... ¡A partir de hoy caminamos juntos!"
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: GitHub Pages Guide -->
+    <div id="githubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="zelda-card w-full max-w-2xl rounded-2xl p-6 sm:p-8 border border-amber-500/50 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="corner-decoration corner-tl"></div><div class="corner-decoration corner-tr"></div>
+            <div class="corner-decoration corner-bl"></div><div class="corner-decoration corner-br"></div>
+            
+            <button id="btnCloseModal" class="absolute top-4 right-4 text-emerald-400 hover:text-amber-300 p-2">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-6">
+                <div class="p-3 bg-emerald-900/60 rounded-xl border border-amber-400/40 text-amber-400">
+                    <i data-lucide="globe" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-zelda font-bold text-amber-300">Publicar en GitHub Pages Gratis</h3>
+                    <p class="text-xs text-emerald-300">Sigue estos sencillos pasos para tener tu web online</p>
+                </div>
+            </div>
+
+            <ol class="space-y-4 text-xs sm:text-sm text-slate-200 leading-relaxed mb-6">
+                <li class="flex gap-3 items-start bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/40">
+                    <span class="bg-amber-500 text-black font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-xs">1</span>
+                    <div>
+                        <strong class="text-amber-300">Crea una cuenta en GitHub:</strong> Entra a <a href="https://github.com" target="_blank" class="text-sky-400 underline">github.com</a> y regístrate gratis si aún no tienes cuenta.
+                    </div>
+                </li>
+                <li class="flex gap-3 items-start bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/40">
+                    <span class="bg-amber-500 text-black font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-xs">2</span>
+                    <div>
+                        <strong class="text-amber-300">Crea un nuevo repositorio:</strong> Haz clic en el botón <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-600 text-amber-200">+</span> (arriba a la derecha) -> <em>New repository</em>. Nómbralo como quieras (ej. <code>mi-link-24nov</code>) y asegúrate de marcarlo como <strong>Public</strong>.
+                    </div>
+                </li>
+                <li class="flex gap-3 items-start bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/40">
+                    <span class="bg-amber-500 text-black font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-xs">3</span>
+                    <div>
+                        <strong class="text-amber-300">Sube este archivo:</strong> Dentro de tu nuevo repositorio, haz clic en <em>Uploading an existing file</em>. Guarda este código en tu PC como <strong><code>index.html</code></strong> y arrástralo allí. Haz clic en <em>Commit changes</em>.
+                    </div>
+                </li>
+                <li class="flex gap-3 items-start bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/40">
+                    <span class="bg-amber-500 text-black font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-xs">4</span>
+                    <div>
+                        <strong class="text-amber-300">Activa GitHub Pages:</strong> Ve a la pestaña <strong>Settings</strong> de tu repositorio -> en el menú izquierdo haz clic en <strong>Pages</strong> -> En <em>Branch</em> selecciona <strong>main</strong> (o master) y guarda (<em>Save</em>).
+                    </div>
+                </li>
+                <li class="flex gap-3 items-start bg-emerald-950/60 p-3 rounded-xl border border-emerald-800/40">
+                    <span class="bg-amber-500 text-black font-bold rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-xs">5</span>
+                    <div>
+                        <strong class="text-amber-300">¡Listo!</strong> En 1 o 2 minutos verás un enlace verde con tu página web publicada lista para compartir.
+                    </div>
+                </li>
+            </ol>
+
+            <button id="btnGotIt" class="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black font-bold font-zelda rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-7xl mx-auto p-4 text-center text-xs text-emerald-400/60 relative z-10 border-t border-emerald-900/40 mt-auto">
+        <p>Inspirado en The Legend of Zelda • Creado para recibir a mi Link el 24 de Noviembre</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // Target Date: 24th November 10:00 AM (Fixed target)
+        function getTargetTimestamp() {
+            const now = new Date();
+            let year = now.getFullYear();
+            let target = new Date(year, 10, 24, 10, 0, 0); // Month 10 is November (0-indexed)
+
+            // If Nov 24 10:00 AM has already passed this year, set to next year
+            if (now > target) {
+                target = new Date(year + 1, 10, 24, 10, 0, 0);
+            }
+            return target.getTime();
+        }
+
+        const TARGET_TIMESTAMP = getTargetTimestamp();
+
+        // Romantic Zelda Daily Quotes Dictionary (Key: YYYY-MM-DD or Days Remaining)
+        const dailyQuotesMap = {
+            default: "Cada segundo que pasa es un paso más cerca del día en que el destino finalmente nos una.",
+            quotes: [
+                "No necesito la Espada Maestra para saber que tú eres mi verdadero héroe.",
+                "En cada línea de tiempo y en cada universo, mi corazón siempre elegiría buscarte a ti.",
+                "El Héroe del Tiempo llegará el 24 de Noviembre a las 10:00 AM para empezar nuestra gran aventura.",
+                "Es peligroso ir solo por la vida... por eso no puedo esperar para caminar a tu lado.",
+                "Ni la Trifuerza del Valor se compara con la valentía y la luz que traes a mi vida.",
+                "Contando cada amanecer hasta tenerte cerca. Él es mi Link y la espera vale cada segundo.",
+                "Como la melodía de la Ocarina, tu recuerdo llena de paz cada uno de mis días.",
+                "El mapa de mi futuro solo tiene sentido si tú estás marcado como mi destino.",
+                "Falta poco para que la profecía se cumpla y nuestros caminos se crucen para siempre.",
+                "No hay templo ni distancia que pueda apagar lo que siento mientras espero tu llegada.",
+                "El 24 de Noviembre a las 10 AM no llegará un día cualquiera, llegará mi persona favorita.",
+                "Tu valentía ilumina mi mundo. Prepárate, que nuestro viaje juntos está por comenzar."
+            ]
+        };
+
+        // DOM Elements
+        const daysEl = document.getElementById('days');
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+        const dailyQuoteEl = document.getElementById('dailyQuote');
+        const quoteDateEl = document.getElementById('quoteDate');
+        const timerContainer = document.getElementById('timerContainer');
+        const celebrationCard = document.getElementById('celebrationCard');
+
+        const githubModal = document.getElementById('githubModal');
+        const btnGithubHelp = document.getElementById('btnGithubHelp');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+        const btnGotIt = document.getElementById('btnGotIt');
+
+        // Main Timer Loop
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = TARGET_TIMESTAMP - now;
+
+            if (distance <= 0) {
+                handleArrival();
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            daysEl.textContent = String(days).padStart(2, '0');
+            hoursEl.textContent = String(hours).padStart(2, '0');
+            minutesEl.textContent = String(minutes).padStart(2, '0');
+            secondsEl.textContent = String(seconds).padStart(2, '0');
+        }
+
+        // Daily Quote Updater
+        function updateDailyQuote() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+            const index = dayOfYear % dailyQuotesMap.quotes.length;
+            
+            dailyQuoteEl.textContent = `"${dailyQuotesMap.quotes[index]}"`;
+            
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            quoteDateEl.textContent = today.toLocaleDateString('es-ES', options);
+        }
+
+        // Arrival Celebration Event
+        function handleArrival() {
+            timerContainer.classList.add('hidden');
+            celebrationCard.classList.remove('hidden');
+            
+            // Trigger Gold Confetti Burst
+            confetti({
+                particleCount: 100,
+                spread: 100,
+                origin: { y: 0.6 },
+                colors: ['#ffd700', '#38bdf8', '#10b981', '#ffffff']
+            });
+        }
+
+        // Fairy Particle Animation Effect
+        function initParticles() {
+            const canvas = document.getElementById('particlesCanvas');
+            const ctx = canvas.getContext('2d');
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = Array.from({ length: 35 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 2 + 1,
+                color: Math.random() > 0.4 ? 'rgba(255, 215, 0, ' : 'rgba(56, 189, 248, ',
+                alpha: Math.random(),
+                speedY: -(Math.random() * 0.5 + 0.2),
+                speedX: (Math.random() - 0.5) * 0.4,
+            }));
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                particles.forEach(p => {
+                    p.y += p.speedY;
+                    p.x += p.speedX;
+                    p.alpha += (Math.random() - 0.5) * 0.02;
+
+                    if (p.alpha < 0.1) p.alpha = 0.1;
+                    if (p.alpha > 0.8) p.alpha = 0.8;
+
+                    if (p.y < -10) {
+                        p.y = height + 10;
+                        p.x = Math.random() * width;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color + p.alpha + ')';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ffd700';
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Modal Handlers
+        btnGithubHelp.addEventListener('click', () => githubModal.classList.remove('hidden'));
+        btnCloseModal.addEventListener('click', () => githubModal.classList.add('hidden'));
+        btnGotIt.addEventListener('click', () => githubModal.classList.add('hidden'));
+        githubModal.addEventListener('click', (e) => { if (e.target === githubModal) githubModal.classList.add('hidden'); });
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateTimer();
+            setInterval(updateTimer, 1000);
+            updateDailyQuote();
+            initParticles();
+        });
+    </script>
+</body>
+</html>
